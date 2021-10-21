@@ -1,0 +1,11 @@
+.github
+.husky
+
+build
+node_modules
+
+public
+.eslintrc.js
+.prettierrc
+craco.config.js
+tailwind.config.js
