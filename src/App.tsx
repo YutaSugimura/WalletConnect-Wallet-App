@@ -3,7 +3,6 @@ import { CLIENT_EVENTS } from '@walletconnect/client';
 import { ERROR, getAppMetadata } from '@walletconnect/utils';
 import { SessionTypes } from '@walletconnect/types';
 import { JsonRpcResponse, formatJsonRpcError, formatJsonRpcResult } from '@json-rpc-tools/utils';
-// import { ethers } from 'ethers';
 
 import { DEFAULT_CHAINS, DEFAULT_EIP155_METHODS } from './common';
 import { ChainJsonRpc, ChainNamespaces, ChainsMap } from './types';
@@ -12,7 +11,7 @@ import { apiGetChainJsonRpc, apiGetChainNamespace } from './libs/api';
 // new
 import { useRecoilValue, useResetRecoilState, useSetRecoilState } from 'recoil';
 import { uriInputState } from './recoil/input';
-import { useClientValue } from './hooks/client';
+import { DEFAULT_APP_METADATA, useClientValue } from './hooks/client';
 import { useWallet } from './hooks/wallet';
 
 const App: React.VFC = () => {
@@ -246,13 +245,14 @@ const App: React.VFC = () => {
       return proposal.permissions.blockchain.chains.includes(chainId);
     });
 
-    await client.approve({
+    const session = await client.approve({
       proposal,
-      response: { state: { accounts } },
+      response: { state: { accounts }, metadata: getAppMetadata() || DEFAULT_APP_METADATA },
     });
 
     setCardStatus({ type: 'default' });
     setIsConnected(true);
+    setSessions([session]);
   };
 
   const rejectSession = async (proposal: SessionTypes.Proposal) => {

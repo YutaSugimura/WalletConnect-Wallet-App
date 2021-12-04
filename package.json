@@ -9,13 +9,13 @@
     "eject": "react-scripts eject"
   },
   "dependencies": {
-    "@craco/craco": "^6.3.0",
+    "@craco/craco": "^6.4.2",
     "@json-rpc-tools/utils": "^1.7.6",
     "@walletconnect/client": "^2.0.0-beta.19",
-    "axios": "^0.23.0",
-    "caip-wallet": "^2.0.0-beta.5",
+    "axios": "^0.24.0",
+    "caip-wallet": "2.0.0-beta.5",
     "cosmos-wallet": "^1.1.0",
-    "ethers": "^5.5.1",
+    "ethers": "^5.0.30",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-scripts": "4.0.3",
