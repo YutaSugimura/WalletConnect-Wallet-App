@@ -23,10 +23,3 @@ export interface ChainJsonRpc {
 export interface ChainNamespaces {
   [namespace: string]: ChainsMap;
 }
-
-export const DEFAULT_APP_METADATA = {
-  name: 'React Wallet',
-  description: 'React Wallet for WalletConnect',
-  url: 'https://walletconnect.org/',
-  icons: ['https://walletconnect.org/walletconnect-logo.png'],
-};

@@ -1,17 +1,24 @@
 import { useEffect, useState } from 'react';
-import WalletConnectClient from '@walletconnect/client';
 import { CLIENT_EVENTS } from '@walletconnect/client';
 import { ERROR, getAppMetadata } from '@walletconnect/utils';
 import { SessionTypes } from '@walletconnect/types';
+import { JsonRpcResponse, formatJsonRpcError, formatJsonRpcResult } from '@json-rpc-tools/utils';
 // import { ethers } from 'ethers';
 
 import { DEFAULT_CHAINS, DEFAULT_EIP155_METHODS } from './common';
-import { ChainJsonRpc, ChainNamespaces, ChainsMap, DEFAULT_APP_METADATA } from './types';
+import { ChainJsonRpc, ChainNamespaces, ChainsMap } from './types';
 import { apiGetChainJsonRpc, apiGetChainNamespace } from './libs/api';
 
+// new
+import { useRecoilValue, useResetRecoilState, useSetRecoilState } from 'recoil';
+import { uriInputState } from './recoil/input';
+import { useClientValue } from './hooks/client';
+import { useWallet } from './hooks/wallet';
+
 const App: React.VFC = () => {
-  const [uri, setUri] = useState('');
-  const [client, setClient] = useState<WalletConnectClient | null>(null);
+  const uriInputValue = useRecoilValue(uriInputState);
+  const setUriInputValue = useSetRecoilState(uriInputState);
+  const resetUriInputValue = useResetRecoilState(uriInputState);
 
   const [chains] = useState(DEFAULT_CHAINS);
   const [chainData, setChainData] = useState<ChainNamespaces>({});
@@ -20,43 +27,31 @@ const App: React.VFC = () => {
   const [sessions, setSessions] = useState<SessionTypes.Created[]>([]);
 
   const [cardStatus, setCardStatus] = useState<{
-    type: 'default' | 'proposal' | 'session';
+    type: 'default' | 'proposal' | 'session' | 'request';
     data?: any;
   }>({
     type: 'default',
   });
+
   const [isConnected, setIsConnected] = useState<boolean>(false);
+
+  const client = useClientValue();
+  const wallet = useWallet(chains);
 
   useEffect(() => {
     loadChainData();
     loadChainJsonRpc();
-
-    (async () => {
-      const _client = await WalletConnectClient.init({
-        controller: true,
-        relayProvider: 'wss://relay.walletconnect.org',
-        apiKey: '486a76ffdcaac899c6d6fd345c69fb8c',
-        metadata: DEFAULT_APP_METADATA,
-        // logger: 'debug',
-      });
-
-      setClient(_client);
-    })();
   }, []);
 
   const pairing = () => {
     if (client === null) return;
-    if (uri === '') return;
+    if (uriInputValue === null) return;
 
-    client.pair({ uri });
+    client.pair({ uri: uriInputValue });
   };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setUri(event.target.value);
-  };
-
-  const resetForm = () => {
-    setUri('');
+    setUriInputValue(event.target.value);
   };
 
   const getAllNamespaces = () => {
@@ -115,6 +110,12 @@ const App: React.VFC = () => {
     setJsonRpc({ ...jsonrpc });
   };
 
+  const respondRequest = async (topic: string, response: JsonRpcResponse) => {
+    if (client === null) return;
+
+    await client.respond({ topic, response });
+  };
+
   useEffect(() => {
     const subscribe = async () => {
       if (client === null) return;
@@ -158,6 +159,8 @@ const App: React.VFC = () => {
 
       // Request
       client.on(CLIENT_EVENTS.session.request, async (requestEvent: SessionTypes.RequestEvent) => {
+        if (wallet === null) return;
+
         console.log('EVENT', 'session_request', requestEvent.request);
 
         const chainId = requestEvent.chainId || chains[0];
@@ -166,11 +169,19 @@ const App: React.VFC = () => {
           const requiresApproval = jsonRpc[namespace].methods.sign.includes(
             requestEvent.request.method,
           );
+
           if (requiresApproval) {
             setRequests([...requests, requestEvent]);
+          } else {
+            const result = await wallet.request(requestEvent.request, { chainId });
+            const response = formatJsonRpcResult(requestEvent.request.id, result);
+            await respondRequest(requestEvent.topic, response);
           }
         } catch (e) {
           console.log(e);
+
+          const response = formatJsonRpcError(requestEvent.request.id, (e as any).message);
+          await respondRequest(requestEvent.topic, response);
         }
       });
 
@@ -186,6 +197,7 @@ const App: React.VFC = () => {
         console.log('EVENT', 'session_deleted');
 
         setSessions(client.session.values);
+        setIsConnected(false);
       });
     };
 
@@ -200,12 +212,11 @@ const App: React.VFC = () => {
     const checkPersistedState = async () => {
       if (client === null) return;
 
-      const requests = client.session.history.pending;
-      const sessions = client.session.values;
-      console.log(sessions);
-      setRequests([...requests]);
-      setSessions([...sessions]);
-      sessions.length > 0 && setIsConnected(true);
+      console.log('checkPersisted');
+
+      setRequests([...client.session.history.pending]);
+      setSessions([...client.session.values]);
+      client.session.values.length && setIsConnected(true);
     };
 
     if (client !== null) {
@@ -213,15 +224,27 @@ const App: React.VFC = () => {
     }
   }, [client]);
 
-  /** ============= session ======================== */
+  /** Open */
+  const openRequest = async (requestEvent: SessionTypes.RequestEvent) => {
+    if (client === null) return;
+
+    const { peer } = await client.session.get(requestEvent.topic);
+    setCardStatus({ type: 'request', data: { requestEvent, peer } });
+  };
+
+  /** ============= Session ======================== */
   const approveSession = async (proposal: SessionTypes.Proposal) => {
     if (client === null) return;
+    if (wallet === null) return;
 
     console.log('ACTION', 'approveSession');
 
-    const targetAddress = '0x9C26CF80B9CAE7a793CE243cb0CE6A977F2f895f';
-    const account = proposal.permissions.blockchain.chains[0] + ':' + targetAddress;
-    const accounts = [account];
+    const currentAccounts: string[] = await wallet.getAccounts();
+    const accounts = currentAccounts.filter((account) => {
+      const [namespace, reference] = account.split(':');
+      const chainId = `${namespace}:${reference}`;
+      return proposal.permissions.blockchain.chains.includes(chainId);
+    });
 
     await client.approve({
       proposal,
@@ -250,20 +273,93 @@ const App: React.VFC = () => {
     await client.disconnect({ topic, reason: ERROR.USER_DISCONNECTED.format() });
   };
 
+  /** ============= /Session ======================== */
+
   /** ============= Request ======================== */
+  const removeFromPending = async (requestEvent: SessionTypes.RequestEvent) => {
+    setRequests(requests.filter((x) => x.request.id !== requestEvent.request.id));
+  };
+
   const approveRequest = async (requestEvent: SessionTypes.RequestEvent) => {
     if (client === null) return;
+    if (wallet === null) return;
 
     try {
       const chainId = requestEvent.chainId || chains[0];
-      console.log(chainId);
-
-      // const result = await
+      const result = await wallet.request(requestEvent.request as any, { chainId });
+      const response = formatJsonRpcResult(requestEvent.request.id, result);
+      client.respond({
+        topic: requestEvent.topic,
+        response,
+      });
     } catch (e) {
       console.log(e);
-      // client.respond({ topic: requestEvent.topic });
+      const response = formatJsonRpcError(requestEvent.request.id, (e as any).message);
+      client.respond({ topic: requestEvent.topic, response });
     }
+
+    await removeFromPending(requestEvent);
+    setCardStatus({ type: 'default' });
   };
+
+  const rejectRequest = async (requestEvent: SessionTypes.RequestEvent) => {
+    if (client === null) return;
+
+    const error = ERROR.JSONRPC_REQUEST_METHOD_REJECTED.format();
+    const response = {
+      id: requestEvent.request.id,
+      jsonrpc: requestEvent.request.jsonrpc,
+      error,
+    };
+    client.respond({ topic: requestEvent.topic, response });
+    await removeFromPending(requestEvent);
+    setCardStatus({ type: 'default' });
+  };
+
+  /** ============= /Request ======================== */
+
+  const currentChain = sessions.length
+    ? sessions[0].permissions.blockchain.chains[0].replace('eip155:', '')
+    : undefined;
+  const chainName = currentChain
+    ? chainData.eip155[currentChain]
+      ? chainData.eip155[currentChain].name
+      : ''
+    : '';
+
+  if (isConnected) {
+    return (
+      <div className="flex flex-col justify-center items-center p-4">
+        <p>connected</p>
+        <p>network: {chainName}</p>
+
+        <ul className="pt-20 pb-10">
+          {requests.length > 0 &&
+            requests.map((item, index) => (
+              <li key={`${item}_${index}`}>
+                <button onClick={() => openRequest(item)}>{item.request.method}</button>
+              </li>
+            ))}
+        </ul>
+
+        {cardStatus.type === 'request' && (
+          <div>
+            <p>request</p>
+
+            <button onClick={() => approveRequest(cardStatus.data.requestEvent)}>approve</button>
+            <button onClick={() => rejectRequest(cardStatus.data.requestEvent)}>reject</button>
+          </div>
+        )}
+
+        <button
+          onClick={() => disconnect(sessions[sessions.length - 1].topic)}
+          className="text-base text-blue-600"
+        >
+          disconnect
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col justify-center items-center p-4">
@@ -271,8 +367,12 @@ const App: React.VFC = () => {
 
       <div className="pt-4">
         <h2>uri</h2>
-        <input className="w-80 h-10 border border-gray-800" value={uri} onChange={handleChange} />
-        <button onClick={resetForm}>reset</button>
+        <input
+          className="w-80 h-10 border border-gray-800"
+          value={uriInputValue ?? ''}
+          onChange={handleChange}
+        />
+        <button onClick={resetUriInputValue}>reset</button>
       </div>
 
       <div className="pt-4">
@@ -292,20 +392,12 @@ const App: React.VFC = () => {
           ))}
 
           {cardStatus.data && cardStatus.data.proposal && (
-            <>
+            <div className="flex justify-center w-60">
               <button onClick={() => approveSession(cardStatus.data.proposal)}>approve</button>
               <button onClick={() => rejectSession(cardStatus.data.proposal)}>reject</button>
-            </>
+            </div>
           )}
         </div>
-      )}
-
-      {isConnected && (
-        <>
-          <button onClick={() => disconnect(sessions[sessions.length - 1].topic)}>
-            disconnect
-          </button>
-        </>
       )}
     </div>
   );

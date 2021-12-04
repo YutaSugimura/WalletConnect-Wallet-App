@@ -10,12 +10,16 @@
   },
   "dependencies": {
     "@craco/craco": "^6.3.0",
+    "@json-rpc-tools/utils": "^1.7.6",
     "@walletconnect/client": "^2.0.0-beta.19",
     "axios": "^0.23.0",
+    "caip-wallet": "^2.0.0-beta.5",
+    "cosmos-wallet": "^1.1.0",
     "ethers": "^5.5.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "react-scripts": "4.0.3"
+    "react-scripts": "4.0.3",
+    "recoil": "^0.5.2"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^5.14.1",
