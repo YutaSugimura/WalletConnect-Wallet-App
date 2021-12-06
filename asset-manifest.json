@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/WalletConnect-Wallet-App/static/css/main.14f5da55.chunk.css",
+    "main.js": "/WalletConnect-Wallet-App/static/js/main.3dd4e84d.chunk.js",
+    "main.js.map": "/WalletConnect-Wallet-App/static/js/main.3dd4e84d.chunk.js.map",
+    "runtime-main.js": "/WalletConnect-Wallet-App/static/js/runtime-main.6fc0356b.js",
+    "runtime-main.js.map": "/WalletConnect-Wallet-App/static/js/runtime-main.6fc0356b.js.map",
+    "static/js/2.481aea63.chunk.js": "/WalletConnect-Wallet-App/static/js/2.481aea63.chunk.js",
+    "static/js/2.481aea63.chunk.js.map": "/WalletConnect-Wallet-App/static/js/2.481aea63.chunk.js.map",
+    "static/js/3.585181d1.chunk.js": "/WalletConnect-Wallet-App/static/js/3.585181d1.chunk.js",
+    "static/js/3.585181d1.chunk.js.map": "/WalletConnect-Wallet-App/static/js/3.585181d1.chunk.js.map",
+    "index.html": "/WalletConnect-Wallet-App/index.html",
+    "static/css/main.14f5da55.chunk.css.map": "/WalletConnect-Wallet-App/static/css/main.14f5da55.chunk.css.map",
+    "static/js/2.481aea63.chunk.js.LICENSE.txt": "/WalletConnect-Wallet-App/static/js/2.481aea63.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.6fc0356b.js",
+    "static/js/2.481aea63.chunk.js",
+    "static/css/main.14f5da55.chunk.css",
+    "static/js/main.3dd4e84d.chunk.js"
+  ]
+}
