@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
 import WalletConnectClient from '@walletconnect/client';
+import { ERROR, getAppMetadata } from '@walletconnect/utils';
+import type Wallet from 'caip-wallet';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { cardState, sessionState } from '../recoil';
+import { accountListState } from '../recoil/wallet';
+import { useCard } from './card';
+import { DEFAULT_APP_METADATA } from '../common';
 
 type Args = {
   debug?: boolean;
@@ -27,9 +34,63 @@ export const useClientValue = (args?: Args) => {
   return state;
 };
 
-export const DEFAULT_APP_METADATA = {
-  name: 'React Wallet',
-  description: 'React Wallet for WalletConnect',
-  url: 'https://walletconnect.org/',
-  icons: ['https://walletconnect.org/walletconnect-logo.png'],
+export const useSession = (client: WalletConnectClient | null) => {
+  const cardValues = useRecoilValue(cardState);
+  const accountList = useRecoilValue(accountListState);
+
+  const setSessions = useSetRecoilState(sessionState);
+
+  const { resetCard } = useCard(client);
+
+  const approveSession = async () => {
+    if (client === null) return;
+    if (!accountList.length) return;
+
+    if (cardValues.type === 'proposal') {
+      const proposal = cardValues.data.proposal;
+
+      console.log('ACTION', 'approveSession');
+
+      const accounts = accountList.filter((account) => {
+        const [namespace, reference] = account.split(':');
+        const chainId = `${namespace}:${reference}`;
+        return proposal.permissions.blockchain.chains.includes(chainId);
+      });
+
+      const session = await client.approve({
+        proposal,
+        response: { state: { accounts }, metadata: getAppMetadata() || DEFAULT_APP_METADATA },
+      });
+
+      resetCard();
+      setSessions([session]);
+    }
+  };
+
+  const rejectSession = async () => {
+    if (client === null) return;
+
+    if (cardValues.type === 'proposal') {
+      const proposal = cardValues.data.proposal;
+
+      console.log('ACTION', 'rejectSession');
+
+      await client.reject({ proposal });
+      resetCard();
+    }
+  };
+
+  const disconnect = (topic: string) => async () => {
+    if (client === null) return;
+
+    console.log('ACTION', 'disconnect');
+
+    await client.disconnect({ topic, reason: ERROR.USER_DISCONNECTED.format() });
+  };
+
+  return {
+    approveSession,
+    rejectSession,
+    disconnect,
+  };
 };

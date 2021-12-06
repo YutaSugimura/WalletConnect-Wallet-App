@@ -18,5 +18,13 @@ export const DEFAULT_TEST_CHAINS = [
 ];
 
 export const DEFAULT_CHAINS = [...DEFAULT_MAIN_CHAINS, ...DEFAULT_TEST_CHAINS];
-
 export const DEFAULT_EIP155_METHODS = ['eth_sendTransaction', 'personal_sign', 'eth_signTypedData'];
+
+export const DEFAULT_APP_METADATA = {
+  name: 'React Test Wallet',
+  description: 'React Wallet for WalletConnect',
+  url: 'https://walletconnect.org/',
+  icons: [
+    'https://firebasestorage.googleapis.com/v0/b/nextc-sandbox.appspot.com/o/TestWalletIcon.png?alt=media&token=52e19829-dc99-4de8-b033-5efb0774b4ca',
+  ],
+};
