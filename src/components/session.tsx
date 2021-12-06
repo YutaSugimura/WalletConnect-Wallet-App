@@ -15,7 +15,7 @@ export const Session: React.VFC<Props> = ({ client }: Props) => {
   const sessions = useRecoilValue(sessionState);
   const requestList = useRecoilValue(requestListState);
 
-  const { disconnect } = useSession(client);
+  const { ping, disconnect } = useSession(client);
   const { openRequest } = useCard(client);
 
   if (
@@ -91,12 +91,16 @@ export const Session: React.VFC<Props> = ({ client }: Props) => {
         )}
       </div>
 
-      <div className="flex justify-center items-center w-80 pt-20">
+      <div className="flex justify-between items-center w-80 pt-20">
+        <button className="flex justify-center items-center w-20 h-8 bg-white border border-gray-500 rounded-full shadow hover:opacity-80">
+          <span className="text-base leading-none">ping</span>
+        </button>
+
         <button
-          className="flex justify-center items-center w-40 h-8 bg-red-400 rounded-full shadow"
+          className="flex justify-center items-center w-40 h-8 bg-red-400 rounded-full shadow hover:opacity-80"
           onClick={disconnect(sessions[sessions.length - 1].topic)}
         >
-          <span className="text-white text-base">disconnect!</span>
+          <span className="text-white text-base leading-none">disconnect!</span>
         </button>
       </div>
     </div>

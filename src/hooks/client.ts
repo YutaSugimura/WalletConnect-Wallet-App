@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import WalletConnectClient from '@walletconnect/client';
 import { ERROR, getAppMetadata } from '@walletconnect/utils';
-import type Wallet from 'caip-wallet';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { cardState, sessionState } from '../recoil';
 import { accountListState } from '../recoil/wallet';
@@ -88,9 +87,20 @@ export const useSession = (client: WalletConnectClient | null) => {
     await client.disconnect({ topic, reason: ERROR.USER_DISCONNECTED.format() });
   };
 
+  const ping = (topic: string) => async () => {
+    if (client === null) return;
+
+    try {
+      await client.ping({ topic });
+    } catch {
+      console.log('not connected');
+    }
+  };
+
   return {
     approveSession,
     rejectSession,
+    ping,
     disconnect,
   };
 };
