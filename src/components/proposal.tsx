@@ -70,14 +70,14 @@ export const Proposal: React.VFC<Props> = ({ client }: Props) => {
       <div className="flex justify-between items-center w-80 pt-5">
         <button
           onClick={approveSession}
-          className="flex justify-center items-center h-8 w-24 bg-blue-600 rounded-2xl shadow"
+          className="flex justify-center items-center h-8 w-24 bg-blue-600 rounded-2xl shadow hover:opacity-80"
         >
           <span className="text-white text-base font-bold leading-none pb-0.5">approve</span>
         </button>
 
         <button
           onClick={rejectSession}
-          className="flex justify-center items-center h-8 w-24 bg-red-500 rounded-2xl shadow"
+          className="flex justify-center items-center h-8 w-24 bg-red-500 rounded-2xl shadow hover:opacity-80"
         >
           <span className="text-white text-base font-bold leading-none pb-0.5">reject</span>
         </button>

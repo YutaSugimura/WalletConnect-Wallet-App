@@ -68,14 +68,14 @@ export const Request: React.VFC<Props> = ({ client, wallet }: Props) => {
       <div className="flex justify-between items-center w-80 pt-5 pb-10">
         <button
           onClick={approveRequest}
-          className="flex justify-center items-center h-8 w-24 bg-blue-600 rounded-2xl shadow"
+          className="flex justify-center items-center h-8 w-24 bg-blue-600 rounded-2xl shadow hover:opacity-80"
         >
           <span className="text-white text-base font-bold leading-none pb-0.5">approve</span>
         </button>
 
         <button
           onClick={rejectRequest}
-          className="flex justify-center items-center h-8 w-24 bg-red-500 rounded-2xl shadow"
+          className="flex justify-center items-center h-8 w-24 bg-red-500 rounded-2xl shadow hover:opacity-80"
         >
           <span className="text-white text-base font-bold leading-none pb-0.5">reject</span>
         </button>
