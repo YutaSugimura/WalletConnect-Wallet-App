@@ -20,7 +20,7 @@ export const useClientValue = (args?: Args) => {
         const client = await WalletConnectClient.init({
           controller: true,
           relayProvider: 'wss://relay.walletconnect.org',
-          apiKey: '486a76ffdcaac899c6d6fd345c69fb8c',
+          apiKey: process.env.REACT_APP_API_KEY,
           metadata: DEFAULT_APP_METADATA,
           logger: args?.debug ? 'debug' : undefined,
         });
