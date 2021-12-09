@@ -8,11 +8,16 @@ type FormData = {
 export const useUrlForm = (client: WalletConnectClient | null) => {
   const { register, handleSubmit, reset } = useForm<FormData>();
 
-  const onSubmit = handleSubmit((data) => {
+  const onSubmit = handleSubmit(async (data) => {
     if (client === null) return;
 
-    client.pair({ uri: data.uri });
-    reset();
+    try {
+      await client.pair({ uri: data.uri });
+      reset();
+    } catch (e) {
+      console.log('error pairing');
+      console.error(e);
+    }
   });
 
   return {

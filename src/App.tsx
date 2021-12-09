@@ -11,6 +11,7 @@ import { Form } from './components/form';
 import { Proposal } from './components/proposal';
 import { Session } from './components/session';
 import { Request } from './components/request';
+import { Footer } from './components/footer';
 
 const App: React.VFC = () => {
   const client = useClientValue();
@@ -43,6 +44,7 @@ const App: React.VFC = () => {
 const Wrap: React.VFC = () => (
   <Container>
     <App />
+    <Footer />
   </Container>
 );
 

@@ -12,6 +12,7 @@ export const Form: React.VFC<Props> = ({ client }: Props) => {
     <form onSubmit={onSubmit} className="flex flex-col justify-center items-center pt-10">
       <input
         {...register('uri', { required: true })}
+        placeholder="wc:5a662cc..."
         className="w-80 h-10 bg-gray-100 px-2 border border-gray-900 rounded"
       />
 
